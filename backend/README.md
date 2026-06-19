@@ -109,7 +109,7 @@ Copy `.env` and fill in the values:
 ## Project Structure
 
 ```text
-grc-backend/
+backend/
 ├── cmd/server/main.go              # Entry point — middleware chain + route registration
 ├── internal/
 │   ├── config/config.go            # Env var loading (mustEnv)
