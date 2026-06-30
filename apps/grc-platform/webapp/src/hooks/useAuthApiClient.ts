@@ -70,8 +70,11 @@ export function useAuthApiClient() {
     let token: string | null = null;
     try {
       token = await getIdToken();
-    } catch {
-      // Asgardeo not configured — backend must have AUTH_TOKEN_VALIDATOR_ENABLED=false
+    } catch (err) {
+      const isMockAuth = window.config?.GRC_PLATFORM_MOCK_AUTH === true;
+      if (!isMockAuth) {
+        console.warn("[useAuthApiClient] token retrieval failed:", err);
+      }
     }
     return fetch(input, {
       ...options,

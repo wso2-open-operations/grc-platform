@@ -48,7 +48,7 @@ func (s *frameworkService) ListFrameworks(ctx context.Context) ([]*model.AuditFr
 
 func (s *frameworkService) CreateFramework(ctx context.Context, req model.CreateFrameworkRequest, createdBy string) (*model.AuditFramework, error) {
 	if req.Name == "" {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "name is required"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "name is required"}
 	}
 	return s.frameworkRepo.Create(ctx, req, createdBy)
 }
@@ -59,7 +59,7 @@ func (s *frameworkService) ListProducts(ctx context.Context) ([]*model.AuditProd
 
 func (s *frameworkService) CreateProduct(ctx context.Context, req model.CreateProductRequest, createdBy string) (*model.AuditProduct, error) {
 	if req.Name == "" {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "name is required"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "name is required"}
 	}
 	return s.productRepo.Create(ctx, req, createdBy)
 }

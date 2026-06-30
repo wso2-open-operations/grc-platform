@@ -85,7 +85,10 @@ func (r *productRepository) Create(ctx context.Context, req model.CreateProductR
 		}
 		return nil, fmt.Errorf("product.Create: %w", err)
 	}
-	id64, _ := res.LastInsertId()
+	id64, err := res.LastInsertId()
+	if err != nil || id64 == 0 {
+		return nil, fmt.Errorf("product.Create get insert id: %w", err)
+	}
 	return r.GetByID(ctx, int(id64))
 }
 

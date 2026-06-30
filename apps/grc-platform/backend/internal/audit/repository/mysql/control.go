@@ -87,14 +87,16 @@ func (r *controlRepository) GetByID(ctx context.Context, auditID, controlID int)
 	return c, nil
 }
 
-func (r *controlRepository) Create(ctx context.Context, auditID int, req model.AddControlRequest, createdBy string) (*model.AuditControl, error) {
-	// OE controls start at POPULATION_PENDING; DESIGN controls start at EVIDENCE_PENDING.
+// createInTx inserts one control (and its population row for OE controls) using
+// the provided transaction. It returns the new row's auto-increment id.
+// The caller is responsible for committing or rolling back the transaction.
+func (r *controlRepository) createInTx(ctx context.Context, tx *sql.Tx, auditID int, req model.AddControlRequest, createdBy string) (int64, error) {
 	initialStatus := "EVIDENCE_PENDING"
 	if req.RequirementType == "OE" {
 		initialStatus = "POPULATION_PENDING"
 	}
 
-	res, err := r.db.ExecContext(ctx, `
+	res, err := tx.ExecContext(ctx, `
 		INSERT INTO audit_control
 		  (audit_id, control_number, description, evidence_requirement,
 		   requirement_type, control_type, scope,
@@ -110,9 +112,12 @@ func (r *controlRepository) Create(ctx context.Context, auditID int, req model.A
 		createdBy, createdBy,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("control.Create: %w", err)
+		return 0, fmt.Errorf("control.Create: %w", err)
 	}
-	id64, _ := res.LastInsertId()
+	id64, err := res.LastInsertId()
+	if err != nil || id64 == 0 {
+		return 0, fmt.Errorf("control.Create get insert id: %w", err)
+	}
 
 	if req.RequirementType == "OE" {
 		var desc string
@@ -124,7 +129,7 @@ func (r *controlRepository) Create(ctx context.Context, auditID int, req model.A
 			dueDate = req.Population.DueDate
 			comments = req.Population.Comments
 		}
-		_, err = r.db.ExecContext(ctx, `
+		_, err = tx.ExecContext(ctx, `
 			INSERT INTO audit_population
 			  (audit_id, control_id, description, reference_number, due_date, comments, created_by, updated_by)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -136,17 +141,55 @@ func (r *controlRepository) Create(ctx context.Context, auditID int, req model.A
 			createdBy, createdBy,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("control.Create population: %w", err)
+			return 0, fmt.Errorf("control.Create population: %w", err)
 		}
+	}
+
+	return id64, nil
+}
+
+func (r *controlRepository) Create(ctx context.Context, auditID int, req model.AddControlRequest, createdBy string) (*model.AuditControl, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("control.Create begin tx: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // error irrelevant after Commit or on rollback path
+
+	id64, err := r.createInTx(ctx, tx, auditID, req, createdBy)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("control.Create commit: %w", err)
 	}
 
 	return r.GetByID(ctx, auditID, int(id64))
 }
 
 func (r *controlRepository) BulkCreate(ctx context.Context, auditID int, reqs []model.AddControlRequest, createdBy string) ([]*model.AuditControl, error) {
-	controls := make([]*model.AuditControl, 0, len(reqs))
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("control.BulkCreate begin tx: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // error irrelevant after Commit or on rollback path
+
+	ids := make([]int64, 0, len(reqs))
 	for _, req := range reqs {
-		c, err := r.Create(ctx, auditID, req, createdBy)
+		id64, err := r.createInTx(ctx, tx, auditID, req, createdBy)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id64)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("control.BulkCreate commit: %w", err)
+	}
+
+	controls := make([]*model.AuditControl, 0, len(ids))
+	for _, id64 := range ids {
+		c, err := r.GetByID(ctx, auditID, int(id64))
 		if err != nil {
 			return nil, err
 		}

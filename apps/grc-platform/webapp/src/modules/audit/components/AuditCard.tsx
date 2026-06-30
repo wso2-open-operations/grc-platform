@@ -68,7 +68,7 @@ export default function AuditCard({ audit, onClick, onDelete }: AuditCardProps):
     >
       {/* Menu button sits outside CardActionArea so it doesn't trigger card navigation */}
       <Box sx={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}>
-        <IconButton size="small" onClick={handleMenuOpen} sx={{ color: "text.secondary" }}>
+        <IconButton size="small" aria-label="Audit actions" onClick={handleMenuOpen} sx={{ color: "text.secondary" }}>
           <MoreVertical size={16} />
         </IconButton>
       </Box>

@@ -43,30 +43,15 @@ import { useNavigate } from "react-router";
 import { useGetDashboard } from "@modules/audit/api/useGetDashboard";
 import { useAuditRole } from "@modules/audit/hooks/useAuditRole";
 import type { AuditRole } from "@modules/audit/hooks/useAuditRole";
+import { CONTROL_STATUS_COLORS, CONTROL_STATUS_LABELS } from "@modules/audit/utils/controlStatus";
+import type { ControlStatus } from "@modules/audit/types/audit";
 import type { ActionItem, OverdueControl, StatusCount, TeamCompletion } from "@modules/audit/types/dashboard";
 
-// ── All 12 control statuses ───────────────────────────────────────────────────
-
-const ALL_STATUSES: { status: string; label: string; color: string }[] = [
-  { status: "EVIDENCE_PENDING",              label: "Evidence Pending",          color: "#FB8C00" },
-  { status: "EVIDENCE_INTERNAL_REVIEW",      label: "Evidence Internal Review",  color: "#1E88E5" },
-  { status: "EVIDENCE_UNDER_VALIDATION",     label: "Evidence Under Validation", color: "#8E24AA" },
-  { status: "EVIDENCE_NEED_CLARIFICATION",   label: "Evidence Need Clarification",color: "#E53935" },
-  { status: "COMPLETE",                      label: "Complete",                  color: "#43A047" },
-  { status: "POPULATION_PENDING",            label: "Population Pending",        color: "#FFB300" },
-  { status: "POPULATION_INTERNAL_REVIEW",    label: "Population Internal Review",color: "#039BE5" },
-  { status: "POPULATION_UNDER_VALIDATION",   label: "Population Under Validation",color: "#AB47BC" },
-  { status: "POPULATION_NEED_CLARIFICATION", label: "Population Need Clarification",color: "#EF5350" },
-  { status: "POPULATION_COMPLETE",           label: "Population Complete",       color: "#66BB6A" },
-  { status: "AWAITING_SAMPLE",               label: "Awaiting Sample",           color: "#78909C" },
-  { status: "SUBMITTED_SAMPLE",              label: "Sample Submitted",          color: "#26A69A" },
-];
-
 function statusColor(s: string): string {
-  return ALL_STATUSES.find((x) => x.status === s)?.color ?? "#90A4AE";
+  return CONTROL_STATUS_COLORS[s as ControlStatus] ?? "#90A4AE";
 }
 function statusLabel(s: string): string {
-  return ALL_STATUSES.find((x) => x.status === s)?.label ?? s;
+  return CONTROL_STATUS_LABELS[s as ControlStatus] ?? s;
 }
 
 // ── Action label per role/status ─────────────────────────────────────────────
@@ -118,9 +103,11 @@ function StillSector(props: Record<string, unknown>): JSX.Element {
 function StatusDonut({ data }: { data: StatusCount[] }): JSX.Element {
   // Merge API data into the full 12-status list so all statuses always appear.
   const countMap = Object.fromEntries(data.map((d) => [d.status, d.count]));
-  const pieData = ALL_STATUSES.map((s) => ({
-    ...s,
-    value: countMap[s.status] ?? 0,
+  const pieData = (Object.keys(CONTROL_STATUS_LABELS) as ControlStatus[]).map((status) => ({
+    status,
+    label: CONTROL_STATUS_LABELS[status],
+    color: CONTROL_STATUS_COLORS[status],
+    value: countMap[status] ?? 0,
   })).filter((s) => s.value > 0); // only show statuses that have controls
 
   const total = pieData.reduce((s, d) => s + d.value, 0);

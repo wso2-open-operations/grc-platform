@@ -103,7 +103,10 @@ func (r *auditRepository) Create(ctx context.Context, req model.CreateAuditReque
 	if err != nil {
 		return nil, fmt.Errorf("audit.Create: %w", err)
 	}
-	id64, _ := res.LastInsertId()
+	id64, err := res.LastInsertId()
+	if err != nil || id64 == 0 {
+		return nil, fmt.Errorf("audit.Create get insert id: %w", err)
+	}
 	return r.GetByID(ctx, int(id64))
 }
 

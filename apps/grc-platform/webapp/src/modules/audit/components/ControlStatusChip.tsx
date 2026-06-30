@@ -16,25 +16,8 @@
 
 import { Chip } from "@mui/material";
 import type { JSX } from "react";
-import { CONTROL_STATUS_LABELS } from "@modules/audit/utils/controlStatus";
+import { CONTROL_STATUS_COLORS, CONTROL_STATUS_LABELS } from "@modules/audit/utils/controlStatus";
 import type { ControlStatus } from "@modules/audit/types/audit";
-
-const STATUS_COLORS: Record<ControlStatus, string> = {
-  // OE population phase
-  POPULATION_PENDING:            "#6b7280",
-  POPULATION_INTERNAL_REVIEW:    "#b45309",
-  POPULATION_UNDER_VALIDATION:   "#7c3aed",
-  POPULATION_NEED_CLARIFICATION: "#dc2626",
-  POPULATION_COMPLETE:           "#0891b2",
-  AWAITING_SAMPLE:               "#0369a1",
-  SUBMITTED_SAMPLE:              "#0284c7",
-  // Evidence phase
-  EVIDENCE_PENDING:              "#ea580c",
-  EVIDENCE_INTERNAL_REVIEW:      "#b45309",
-  EVIDENCE_UNDER_VALIDATION:     "#7c3aed",
-  EVIDENCE_NEED_CLARIFICATION:   "#dc2626",
-  COMPLETE:                      "#16a34a",
-};
 
 interface ControlStatusChipProps {
   status: ControlStatus;
@@ -45,7 +28,7 @@ export default function ControlStatusChip({
   status,
   size = "small",
 }: ControlStatusChipProps): JSX.Element {
-  const color = STATUS_COLORS[status];
+  const color = CONTROL_STATUS_COLORS[status];
   return (
     <Chip
       label={CONTROL_STATUS_LABELS[status]}

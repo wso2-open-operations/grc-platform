@@ -32,7 +32,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-    "github.com/wso2-open-operations/grc-platform/backend/internal/shared/privilege"
+	"github.com/wso2-open-operations/grc-platform/backend/internal/shared/privilege"
 )
 
 type contextKey string
@@ -41,22 +41,22 @@ const userInfoKey contextKey = "user-info"
 
 // UserInfo holds the authenticated user's identity extracted from the Asgardeo JWT.
 type UserInfo struct {
-    Subject string
-    Email   string
-    Groups  []string // Asgardeo role/group claims
+	Subject string
+	Email   string
+	Groups  []string // Asgardeo role/group claims
 }
 
 // Config holds JWT validation settings loaded from environment variables.
 type Config struct {
-    JWKSEndpoint          string
-    Issuer                string
-    Audience              string
-    ClockSkew             time.Duration
-    TokenValidatorEnabled bool
-    // PrivilegeStore resolves role→privilege mappings after JWT validation.
-    // When nil, privilege checking is skipped and HasPrivilege always returns true.
-    // Set to nil for local dev (TokenValidatorEnabled=false); always set in production.
-    PrivilegeStore *privilege.Store
+	JWKSEndpoint          string
+	Issuer                string
+	Audience              string
+	ClockSkew             time.Duration
+	TokenValidatorEnabled bool
+	// PrivilegeStore resolves role→privilege mappings after JWT validation.
+	// When nil, privilege checking is skipped and HasPrivilege always returns true.
+	// Set to nil for local dev (TokenValidatorEnabled=false); always set in production.
+	PrivilegeStore *privilege.Store
 }
 
 type jwtClaims struct {
@@ -70,9 +70,9 @@ type authErrorBody struct {
 }
 
 func writeAuthError(w http.ResponseWriter, message string) {
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusUnauthorized)
-    _ = json.NewEncoder(w).Encode(authErrorBody{Message: message})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(authErrorBody{Message: message})
 }
 
 // jwkEntry holds a single RSA public key extracted from a JWKS response.
@@ -212,59 +212,59 @@ func Auth(cfg Config) func(http.Handler) http.Handler {
 		}
 	}
 
-    return func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            if r.Method == http.MethodGet && r.URL.Path == "/health" {
-                next.ServeHTTP(w, r)
-                return
-            }
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet && r.URL.Path == "/health" {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-            tokenStr := bearerToken(r)
-            if tokenStr == "" {
-                writeAuthError(w, "You are not authorized to perform this action. Please try again.")
-                return
-            }
+			tokenStr := bearerToken(r)
+			if tokenStr == "" {
+				writeAuthError(w, "You are not authorized to perform this action. Please try again.")
+				return
+			}
 
-            info, err := extractUserInfo(tokenStr, cfg, keyFunc)
-            if err != nil {
-                slog.ErrorContext(r.Context(), "auth: token validation failed", "err", err)
-                writeAuthError(w, "You are not authorized to perform this action. Please try again.")
-                return
-            }
+			info, err := extractUserInfo(tokenStr, cfg, keyFunc)
+			if err != nil {
+				slog.ErrorContext(r.Context(), "auth: token validation failed", "err", err)
+				writeAuthError(w, "You are not authorized to perform this action. Please try again.")
+				return
+			}
 
-            ctx := context.WithValue(r.Context(), userInfoKey, info)
-            if cfg.PrivilegeStore != nil {
-                privs := cfg.PrivilegeStore.Resolve(info.Groups)
-                ctx = privilege.WithContext(ctx, privs)
-            }
-            next.ServeHTTP(w, r.WithContext(ctx))
-        })
-    }
+			ctx := context.WithValue(r.Context(), userInfoKey, info)
+			if cfg.PrivilegeStore != nil {
+				privs := cfg.PrivilegeStore.Resolve(info.Groups)
+				ctx = privilege.WithContext(ctx, privs)
+			}
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
 // UserInfoFromContext retrieves the authenticated user from the context.
 // Returns nil if the auth middleware was not applied.
 func UserInfoFromContext(ctx context.Context) *UserInfo {
-    v, _ := ctx.Value(userInfoKey).(*UserInfo)
-    return v
+	v, _ := ctx.Value(userInfoKey).(*UserInfo)
+	return v
 }
 
 // WithUserInfo injects a UserInfo into the context (test helper).
 func WithUserInfo(ctx context.Context, user *UserInfo) context.Context {
-    return context.WithValue(ctx, userInfoKey, user)
+	return context.WithValue(ctx, userInfoKey, user)
 }
 
 func bearerToken(r *http.Request) string {
-    v := r.Header.Get("Authorization")
-    after, ok := strings.CutPrefix(v, "Bearer ")
-    if !ok {
-        return ""
-    }
-    return after
+	v := r.Header.Get("Authorization")
+	after, ok := strings.CutPrefix(v, "Bearer ")
+	if !ok {
+		return ""
+	}
+	return after
 }
 
 func extractUserInfo(tokenStr string, cfg Config, keyFunc jwt.Keyfunc) (*UserInfo, error) {
-    var c jwtClaims
+	var c jwtClaims
 
 	if !cfg.TokenValidatorEnabled {
 		_, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &c)
@@ -287,10 +287,10 @@ func extractUserInfo(tokenStr string, cfg Config, keyFunc jwt.Keyfunc) (*UserInf
 		}
 	}
 
-    sub, err := c.GetSubject()
-    if err != nil || sub == "" {
-        return nil, fmt.Errorf("token missing sub claim")
-    }
+	sub, err := c.GetSubject()
+	if err != nil || sub == "" {
+		return nil, fmt.Errorf("token missing sub claim")
+	}
 
-    return &UserInfo{Subject: sub, Email: c.Email, Groups: c.Groups}, nil
+	return &UserInfo{Subject: sub, Email: c.Email, Groups: c.Groups}, nil
 }

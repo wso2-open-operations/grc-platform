@@ -104,7 +104,7 @@ func (s *controlService) Update(ctx context.Context, auditID, controlID int, req
 
 func (s *controlService) UpdateStatus(ctx context.Context, auditID, controlID int, req model.UpdateStatusRequest, updatedBy string) error {
 	if !validStatuses[req.Status] {
-		return &apierror.Error{StatusCode: http.StatusBadRequest, Body: "invalid status value"}
+		return &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "invalid status value"}
 	}
 	c, err := s.repo.GetByID(ctx, auditID, controlID)
 	if err != nil {
@@ -129,19 +129,19 @@ func (s *controlService) Delete(ctx context.Context, auditID, controlID int) err
 
 func validateAddRequest(req model.AddControlRequest) error {
 	if req.ControlNumber == "" {
-		return &apierror.Error{StatusCode: http.StatusBadRequest, Body: "controlNumber is required"}
+		return &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "controlNumber is required"}
 	}
 	if req.Description == "" {
-		return &apierror.Error{StatusCode: http.StatusBadRequest, Body: "description is required"}
+		return &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "description is required"}
 	}
 	if req.RequirementType != "DESIGN" && req.RequirementType != "OE" {
-		return &apierror.Error{StatusCode: http.StatusBadRequest, Body: "requirementType must be DESIGN or OE"}
+		return &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "requirementType must be DESIGN or OE"}
 	}
 	if req.ControlType != "CONFIG" && req.ControlType != "NON_CONFIG" {
-		return &apierror.Error{StatusCode: http.StatusBadRequest, Body: "controlType must be CONFIG or NON_CONFIG"}
+		return &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "controlType must be CONFIG or NON_CONFIG"}
 	}
 	if req.Scope != "COMMON" && req.Scope != "PRODUCT_SPECIFIC" {
-		return &apierror.Error{StatusCode: http.StatusBadRequest, Body: "scope must be COMMON or PRODUCT_SPECIFIC"}
+		return &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "scope must be COMMON or PRODUCT_SPECIFIC"}
 	}
 	return nil
 }

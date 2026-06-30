@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthApiClient } from "@hooks/useAuthApiClient";
 import { BACKEND_BASE_URL } from "@config/apiConfig";
 import { controlsQueryKey } from "@modules/audit/api/useGetControls";
+import { auditQueryKey } from "@modules/audit/api/useGetAudit";
 import type { ControlStatus } from "@modules/audit/types/audit";
 
 interface UpdateStatusPayload {
@@ -45,8 +46,8 @@ export function useUpdateControlStatus() {
     },
 
     onSuccess: (_data, { auditId }) => {
-      // Refresh the controls list so the table reflects the new status
       void queryClient.invalidateQueries({ queryKey: controlsQueryKey(auditId) });
+      void queryClient.invalidateQueries({ queryKey: auditQueryKey(auditId) });
     },
   });
 }

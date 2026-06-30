@@ -17,6 +17,7 @@
 import {
   Button,
   Checkbox,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   Popover,
@@ -38,13 +39,14 @@ import type { AuditControl, ControlStatus } from "@modules/audit/types/audit";
 // ── Column filter dropdown ──────────────────────────────────────────────────
 
 interface ColumnFilterProps {
+  label: string;
   options: { label: string; value: string }[];
   selected: string[];
   onChange: (values: string[]) => void;
   searchable?: boolean;
 }
 
-function ColumnFilter({ options, selected, onChange, searchable = false }: ColumnFilterProps): JSX.Element {
+function ColumnFilter({ label, options, selected, onChange, searchable = false }: ColumnFilterProps): JSX.Element {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [query, setQuery] = useState("");
 
@@ -72,6 +74,7 @@ function ColumnFilter({ options, selected, onChange, searchable = false }: Colum
     <>
       <IconButton
         size="small"
+        aria-label={`Filter by ${label}`}
         onClick={(e) => { e.stopPropagation(); setAnchorEl(e.currentTarget); }}
         sx={{
           ml: 0.25,
@@ -116,7 +119,7 @@ function ColumnFilter({ options, selected, onChange, searchable = false }: Colum
                   ),
                   endAdornment: query ? (
                     <InputAdornment position="end">
-                      <IconButton size="small" edge="end" onClick={() => setQuery("")}>
+                      <IconButton size="small" edge="end" aria-label="Clear search" onClick={() => setQuery("")}>
                         <X size={12} />
                       </IconButton>
                     </InputAdornment>
@@ -147,30 +150,33 @@ function ColumnFilter({ options, selected, onChange, searchable = false }: Colum
               </Typography>
             ) : (
               visible.map((opt) => (
-                <Box
+                <FormControlLabel
                   key={opt.value}
-                  onClick={() => toggle(opt.value)}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={selected.includes(opt.value)}
+                      onChange={() => toggle(opt.value)}
+                      disableRipple
+                      sx={{ p: 0.5 }}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{ fontSize: "0.82rem", lineHeight: 1.4 }}>
+                      {opt.label}
+                    </Typography>
+                  }
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     px: 0.5,
                     py: 0.1,
                     borderRadius: 1,
-                    cursor: "pointer",
+                    mx: 0,
+                    width: "100%",
                     "&:hover": { bgcolor: "action.hover" },
                   }}
-                >
-                  <Checkbox
-                    size="small"
-                    checked={selected.includes(opt.value)}
-                    onChange={() => {}}
-                    disableRipple
-                    sx={{ p: 0.5 }}
-                  />
-                  <Typography variant="body2" sx={{ fontSize: "0.82rem", lineHeight: 1.4 }}>
-                    {opt.label}
-                  </Typography>
-                </Box>
+                />
               ))
             )}
           </Box>
@@ -356,6 +362,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="requirementType">Req. Type</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Req. Type"
                     options={REQ_TYPE_OPTIONS}
                     selected={filters.requirementType ?? []}
                     onChange={(v) => setFilter("requirementType", v)}
@@ -367,6 +374,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="controlType">Control Type</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Control Type"
                     options={CTRL_TYPE_OPTIONS}
                     selected={filters.controlType ?? []}
                     onChange={(v) => setFilter("controlType", v)}
@@ -378,6 +386,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="status">Status</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Status"
                     options={STATUS_FILTER_OPTIONS}
                     selected={filters.status ?? []}
                     onChange={(v) => setFilter("status", v)}
@@ -390,6 +399,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="auditorName">Auditor POC</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Auditor POC"
                     options={auditorOptions}
                     selected={filters.auditorName ?? []}
                     onChange={(v) => setFilter("auditorName", v)}
@@ -402,6 +412,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="ownerName">Process Owner</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Process Owner"
                     options={ownerOptions}
                     selected={filters.ownerName ?? []}
                     onChange={(v) => setFilter("ownerName", v)}
@@ -414,6 +425,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="teamName">Team</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Team"
                     options={teamOptions}
                     selected={filters.teamName ?? []}
                     onChange={(v) => setFilter("teamName", v)}
@@ -426,6 +438,7 @@ export default function ControlsTable({
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListingTable.SortLabel field="scope">Scope</ListingTable.SortLabel>
                   <ColumnFilter
+                    label="Scope"
                     options={SCOPE_OPTIONS}
                     selected={filters.scope ?? []}
                     onChange={(v) => setFilter("scope", v)}

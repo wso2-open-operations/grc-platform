@@ -700,6 +700,10 @@ interface Step1Props {
   products: AuditProduct[];
   loadingFrameworks: boolean;
   loadingProducts: boolean;
+  errorFrameworks: boolean;
+  errorProducts: boolean;
+  onRefetchFrameworks: () => void;
+  onRefetchProducts: () => void;
   onNameChange: (v: string) => void;
   onFrameworkChange: (v: AuditFramework | null) => void;
   onProductChange: (v: AuditProduct | null) => void;
@@ -722,6 +726,10 @@ function Step1Form({
   products,
   loadingFrameworks,
   loadingProducts,
+  errorFrameworks,
+  errorProducts,
+  onRefetchFrameworks,
+  onRefetchProducts,
   onNameChange,
   onFrameworkChange,
   onProductChange,
@@ -783,92 +791,108 @@ function Step1Form({
       />
 
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-        <Autocomplete
-          options={[...frameworks, CREATE_FW_SENTINEL]}
-          loading={loadingFrameworks}
-          getOptionLabel={(f) =>
-            f.id === -1 ? f.name : f.version ? `${f.name} (${f.version})` : f.name
-          }
-          isOptionEqualToValue={(opt, val) => opt.id === val.id}
-          filterOptions={(options, params) => {
-            const real = options.filter((o) => o.id !== -1);
-            const q = params.inputValue.toLowerCase();
-            const filtered = q
-              ? real.filter((o) =>
-                  (o.version ? `${o.name} (${o.version})` : o.name).toLowerCase().includes(q),
-                )
-              : real;
-            return [...filtered, CREATE_FW_SENTINEL];
-          }}
-          value={framework}
-          onChange={(_e, val) => {
-            if (val && val.id === -1) {
-              setNewFwName("");
-              setFwError(null);
-              setFwDialogOpen(true);
-              return;
+        <Box>
+          <Autocomplete
+            options={[...frameworks, CREATE_FW_SENTINEL]}
+            loading={loadingFrameworks}
+            getOptionLabel={(f) =>
+              f.id === -1 ? f.name : f.version ? `${f.name} (${f.version})` : f.name
             }
-            onFrameworkChange(val);
-          }}
-          slotProps={{ paper: { sx: { backdropFilter: "none", backgroundColor: "background.paper" } } }}
-          renderOption={(props, option) => {
-            const { key, ...rest } = props as React.HTMLAttributes<HTMLLIElement> & { key?: React.Key };
-            if (option.id === -1) {
+            isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            filterOptions={(options, params) => {
+              const real = options.filter((o) => o.id !== -1);
+              const q = params.inputValue.toLowerCase();
+              const filtered = q
+                ? real.filter((o) =>
+                    (o.version ? `${o.name} (${o.version})` : o.name).toLowerCase().includes(q),
+                  )
+                : real;
+              return [...filtered, CREATE_FW_SENTINEL];
+            }}
+            value={framework}
+            onChange={(_e, val) => {
+              if (val && val.id === -1) {
+                setNewFwName("");
+                setFwError(null);
+                setFwDialogOpen(true);
+                return;
+              }
+              onFrameworkChange(val);
+            }}
+            slotProps={{ paper: { sx: { backdropFilter: "none", backgroundColor: "background.paper" } } }}
+            renderOption={(props, option) => {
+              const { key, ...rest } = props as React.HTMLAttributes<HTMLLIElement> & { key?: React.Key };
+              if (option.id === -1) {
+                return (
+                  <li key={key} {...rest}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "primary.main" }}>
+                      <Plus size={14} />
+                      <Typography variant="body2" fontWeight={600}>Create new framework</Typography>
+                    </Box>
+                  </li>
+                );
+              }
               return (
                 <li key={key} {...rest}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "primary.main" }}>
-                    <Plus size={14} />
-                    <Typography variant="body2" fontWeight={600}>Create new framework</Typography>
-                  </Box>
+                  {option.version ? `${option.name} (${option.version})` : option.name}
                 </li>
               );
-            }
-            return (
-              <li key={key} {...rest}>
-                {option.version ? `${option.name} (${option.version})` : option.name}
-              </li>
-            );
-          }}
-          renderInput={(params) => <TextField {...params} label="Framework" required />}
-        />
-        <Autocomplete
-          options={[...products, CREATE_PRODUCT_SENTINEL]}
-          loading={loadingProducts}
-          getOptionLabel={(p) => p.name}
-          isOptionEqualToValue={(opt, val) => opt.id === val.id}
-          filterOptions={(options, params) => {
-            const real = options.filter((o) => o.id !== -1);
-            const q = params.inputValue.toLowerCase();
-            const filtered = q ? real.filter((o) => o.name.toLowerCase().includes(q)) : real;
-            return [...filtered, CREATE_PRODUCT_SENTINEL];
-          }}
-          value={product}
-          onChange={(_e, val) => {
-            if (val && val.id === -1) {
-              setNewProductName("");
-              setProductError(null);
-              setProductDialogOpen(true);
-              return;
-            }
-            onProductChange(val);
-          }}
-          slotProps={{ paper: { sx: { backdropFilter: "none", backgroundColor: "background.paper" } } }}
-          renderOption={(props, option) => {
-            const { key, ...rest } = props as React.HTMLAttributes<HTMLLIElement> & { key?: React.Key };
-            if (option.id === -1) {
-              return (
-                <li key={key} {...rest}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "primary.main" }}>
-                    <Plus size={14} />
-                    <Typography variant="body2" fontWeight={600}>Create new product</Typography>
-                  </Box>
-                </li>
-              );
-            }
-            return <li key={key} {...rest}>{option.name}</li>;
-          }}
-          renderInput={(params) => <TextField {...params} label="Product / System" required />}
-        />
+            }}
+            renderInput={(params) => <TextField {...params} label="Framework" required />}
+          />
+          {errorFrameworks && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+              <Typography variant="caption" color="error">Failed to load frameworks.</Typography>
+              <Button size="small" onClick={() => void onRefetchFrameworks()}>Retry</Button>
+            </Box>
+          )}
+        </Box>
+        <Box>
+          <Autocomplete
+            options={[...products, CREATE_PRODUCT_SENTINEL]}
+            loading={loadingProducts}
+            getOptionLabel={(p) => p.name}
+            isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            filterOptions={(options, params) => {
+              const real = options.filter((o) => o.id !== -1);
+              const q = params.inputValue.toLowerCase();
+              const filtered = q ? real.filter((o) => o.name.toLowerCase().includes(q)) : real;
+              return [...filtered, CREATE_PRODUCT_SENTINEL];
+            }}
+            value={product}
+            onChange={(_e, val) => {
+              if (val && val.id === -1) {
+                setNewProductName("");
+                setProductError(null);
+                setProductDialogOpen(true);
+                return;
+              }
+              onProductChange(val);
+            }}
+            slotProps={{ paper: { sx: { backdropFilter: "none", backgroundColor: "background.paper" } } }}
+            renderOption={(props, option) => {
+              const { key, ...rest } = props as React.HTMLAttributes<HTMLLIElement> & { key?: React.Key };
+              if (option.id === -1) {
+                return (
+                  <li key={key} {...rest}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "primary.main" }}>
+                      <Plus size={14} />
+                      <Typography variant="body2" fontWeight={600}>Create new product</Typography>
+                    </Box>
+                  </li>
+                );
+              }
+              return <li key={key} {...rest}>{option.name}</li>;
+            }}
+            renderInput={(params) => <TextField {...params} label="Product / System" required />}
+          />
+          {errorProducts && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+              <Typography variant="caption" color="error">Failed to load products.</Typography>
+              <Button size="small" onClick={() => void onRefetchProducts()}>Retry</Button>
+            </Box>
+          )}
+        </Box>
       </Box>
 
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
@@ -1007,12 +1031,20 @@ function Step2Controls({
   const users = usersData ?? [];
   const teams = teamsData ?? [];
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Tracks which auditId we've already seeded into drafts, so that a
+  // background refetch of sourceControlsData never overwrites user edits.
+  const seededForAuditId = useRef<number | null>(null);
 
-  // When source controls load for "copy" option, populate drafts
   useEffect(() => {
-    if (source !== "copy" || !sourceControlsData) return;
+    if (source !== "copy") {
+      seededForAuditId.current = null;
+      return;
+    }
+    if (!sourceControlsData || copyAuditId === null) return;
+    if (seededForAuditId.current === copyAuditId) return;
+    seededForAuditId.current = copyAuditId;
     onDraftsChange(sourceControlsData.items.map(controlToDraft));
-  }, [source, sourceControlsData, onDraftsChange]);
+  }, [source, sourceControlsData, copyAuditId, onDraftsChange]);
 
   const allAudits = auditsData?.items ?? [];
 
@@ -1322,8 +1354,8 @@ const STEPS = ["Audit Details", "Add Controls", "Review & Submit"];
 export default function CreateAuditPage(): JSX.Element {
   const navigate = useNavigate();
 
-  const { data: frameworksData, isLoading: loadingFrameworks } = useGetFrameworks();
-  const { data: productsData, isLoading: loadingProducts } = useGetProducts();
+  const { data: frameworksData, isLoading: loadingFrameworks, isError: errorFrameworks, refetch: refetchFrameworks } = useGetFrameworks();
+  const { data: productsData, isLoading: loadingProducts, isError: errorProducts, refetch: refetchProducts } = useGetProducts();
   const { data: usersData } = useGetUsers();
   const { data: teamsData } = useGetTeams();
 
@@ -1347,6 +1379,9 @@ export default function CreateAuditPage(): JSX.Element {
 
   // Submit state
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Holds the audit id after a successful createAudit call so that retrying
+  // after a bulkAdd failure skips re-creation and avoids duplicate audits.
+  const createdAuditIdRef = useRef<number | null>(null);
 
   const frameworks = frameworksData ?? [];
   const products = productsData ?? [];
@@ -1363,24 +1398,29 @@ export default function CreateAuditPage(): JSX.Element {
     setSubmitError(null);
 
     try {
-      const audit = await createAudit.mutateAsync({
-        name: name.trim(),
-        frameworkId: framework.id,
-        productId: product.id,
-        periodStart,
-        periodEnd,
-        scopeDescription: scopeDescription.trim() || null,
-      });
+      // Use the ref so a retry after a failed bulkAdd skips re-creation.
+      if (createdAuditIdRef.current === null) {
+        const audit = await createAudit.mutateAsync({
+          name: name.trim(),
+          frameworkId: framework.id,
+          productId: product.id,
+          periodStart,
+          periodEnd,
+          scopeDescription: scopeDescription.trim() || null,
+        });
+        createdAuditIdRef.current = audit.id;
+      }
 
+      const auditId = createdAuditIdRef.current;
       const validDrafts = drafts.filter((d) => d.controlNumber.trim() && d.description.trim());
       if (validDrafts.length > 0) {
         await bulkAdd.mutateAsync({
-          auditId: audit.id,
+          auditId,
           controls: validDrafts.map(draftToRequest),
         });
       }
 
-      void navigate(`/audit/audits/${audit.id}`);
+      void navigate(`/audit/audits/${auditId}`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to create audit. Please try again.");
     }
@@ -1426,6 +1466,10 @@ export default function CreateAuditPage(): JSX.Element {
             products={products}
             loadingFrameworks={loadingFrameworks}
             loadingProducts={loadingProducts}
+            errorFrameworks={errorFrameworks}
+            errorProducts={errorProducts}
+            onRefetchFrameworks={refetchFrameworks}
+            onRefetchProducts={refetchProducts}
             onNameChange={setName}
             onFrameworkChange={setFramework}
             onProductChange={setProduct}

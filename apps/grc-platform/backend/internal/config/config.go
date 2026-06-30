@@ -17,37 +17,37 @@
 package config
 
 import (
-    "fmt"
-    "os"
-    "time"
+	"fmt"
+	"os"
+	"time"
 )
 
 // Config holds all application configuration loaded from environment variables.
 type Config struct {
-	Port               string
-	DB                 DBConfig
-	Auth               AuthConfig
-	Azure              AzureConfig
-	CORSAllowedOrigin  string
+	Port              string
+	DB                DBConfig
+	Auth              AuthConfig
+	Azure             AzureConfig
+	CORSAllowedOrigin string
 }
 
 type DBConfig struct {
-    DSN string
+	DSN string
 }
 
 type AuthConfig struct {
-    JWKSEndpoint          string
-    Issuer                string
-    Audience              string
-    ClockSkew             time.Duration
-    TokenValidatorEnabled bool
+	JWKSEndpoint          string
+	Issuer                string
+	Audience              string
+	ClockSkew             time.Duration
+	TokenValidatorEnabled bool
 }
 
 // AzureConfig holds Azure Blob Storage credentials used for evidence file uploads.
 type AzureConfig struct {
-    StorageAccountName string
-    StorageAccountKey  string
-    ContainerName      string
+	StorageAccountName string
+	StorageAccountKey  string
+	ContainerName      string
 }
 
 // Load reads configuration from environment variables.
@@ -55,29 +55,29 @@ type AzureConfig struct {
 // AUTH_TOKEN_VALIDATOR_ENABLED is true (the default). They are not needed for
 // local development (set AUTH_TOKEN_VALIDATOR_ENABLED=false).
 func Load() (Config, error) {
-    tokenValidatorEnabled := os.Getenv("AUTH_TOKEN_VALIDATOR_ENABLED") != "false"
+	tokenValidatorEnabled := os.Getenv("AUTH_TOKEN_VALIDATOR_ENABLED") != "false"
 
-    authCfg := AuthConfig{
-        ClockSkew:             5 * time.Second,
-        TokenValidatorEnabled: tokenValidatorEnabled,
-    }
-    if tokenValidatorEnabled {
-        var err error
-        if authCfg.JWKSEndpoint, err = mustEnv("AUTH_JWKS_ENDPOINT"); err != nil {
-            return Config{}, err
-        }
-        if authCfg.Issuer, err = mustEnv("AUTH_ISSUER"); err != nil {
-            return Config{}, err
-        }
-        if authCfg.Audience, err = mustEnv("AUTH_AUDIENCE"); err != nil {
-            return Config{}, err
-        }
-    }
+	authCfg := AuthConfig{
+		ClockSkew:             5 * time.Second,
+		TokenValidatorEnabled: tokenValidatorEnabled,
+	}
+	if tokenValidatorEnabled {
+		var err error
+		if authCfg.JWKSEndpoint, err = mustEnv("AUTH_JWKS_ENDPOINT"); err != nil {
+			return Config{}, err
+		}
+		if authCfg.Issuer, err = mustEnv("AUTH_ISSUER"); err != nil {
+			return Config{}, err
+		}
+		if authCfg.Audience, err = mustEnv("AUTH_AUDIENCE"); err != nil {
+			return Config{}, err
+		}
+	}
 
-    dsn, err := mustEnv("DB_DSN")
-    if err != nil {
-        return Config{}, err
-    }
+	dsn, err := mustEnv("DB_DSN")
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		Port: envOrDefault("PORT", ":8080"),
@@ -95,16 +95,16 @@ func Load() (Config, error) {
 }
 
 func mustEnv(key string) (string, error) {
-    v := os.Getenv(key)
-    if v == "" {
-        return "", fmt.Errorf("required environment variable is not set: %s", key)
-    }
-    return v, nil
+	v := os.Getenv(key)
+	if v == "" {
+		return "", fmt.Errorf("required environment variable is not set: %s", key)
+	}
+	return v, nil
 }
 
 func envOrDefault(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }

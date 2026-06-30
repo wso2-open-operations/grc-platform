@@ -30,3 +30,20 @@ export const CONTROL_STATUS_LABELS: Record<ControlStatus, string> = {
   EVIDENCE_NEED_CLARIFICATION:   "Evidence Need Clarification",
   COMPLETE:                      "Complete",
 };
+
+export const CONTROL_STATUS_COLORS: Record<ControlStatus, string> = {
+  // OE population phase
+  POPULATION_PENDING:            "#6b7280",
+  POPULATION_INTERNAL_REVIEW:    "#b45309",
+  POPULATION_UNDER_VALIDATION:   "#7c3aed",
+  POPULATION_NEED_CLARIFICATION: "#dc2626",
+  POPULATION_COMPLETE:           "#0891b2",
+  AWAITING_SAMPLE:               "#0369a1",
+  SUBMITTED_SAMPLE:              "#0284c7",
+  // Evidence phase
+  EVIDENCE_PENDING:              "#ea580c",
+  EVIDENCE_INTERNAL_REVIEW:      "#b45309",
+  EVIDENCE_UNDER_VALIDATION:     "#7c3aed",
+  EVIDENCE_NEED_CLARIFICATION:   "#dc2626",
+  COMPLETE:                      "#16a34a",
+};

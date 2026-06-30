@@ -17,15 +17,15 @@
 package main
 
 import (
-    "context"
-    "errors"
-    "log/slog"
-    "net"
-    "net/http"
-    "os"
-    "os/signal"
-    "syscall"
-    "time"
+	"context"
+	"errors"
+	"log/slog"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	audithandler "github.com/wso2-open-operations/grc-platform/backend/internal/audit/handler"
 	"github.com/wso2-open-operations/grc-platform/backend/internal/config"
@@ -39,35 +39,35 @@ import (
 )
 
 func main() {
-    middleware.ConfigureLogger()
+	middleware.ConfigureLogger()
 
-    cfg, err := config.Load()
-    if err != nil {
-        slog.Error("failed to load configuration", "err", err)
-        os.Exit(1)
-    }
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("failed to load configuration", "err", err)
+		os.Exit(1)
+	}
 
-    sqlDB, err := db.Connect(cfg.DB.DSN)
-    if err != nil {
-        slog.Error("failed to connect to database", "err", err)
-        os.Exit(1)
-    }
-    defer sqlDB.Close()
+	sqlDB, err := db.Connect(cfg.DB.DSN)
+	if err != nil {
+		slog.Error("failed to connect to database", "err", err)
+		os.Exit(1)
+	}
+	defer sqlDB.Close()
 
-    // Load the role→privilege mapping from the database.
-    // When TokenValidatorEnabled=false (local dev), skip loading — HasPrivilege returns true for all checks.
-    // When TokenValidatorEnabled=true (production), load is required — exit if it fails.
-    var privStore *privilege.Store
-    if cfg.Auth.TokenValidatorEnabled {
-        loadCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-        defer cancel()
-        privStore, err = privilege.New(loadCtx, sqlDB)
-        if err != nil {
-            slog.Error("failed to load privilege mapping from database", "err", err)
-            os.Exit(1)
-        }
-        slog.Info("privilege store loaded")
-    }
+	// Load the role→privilege mapping from the database.
+	// When TokenValidatorEnabled=false (local dev), skip loading — HasPrivilege returns true for all checks.
+	// When TokenValidatorEnabled=true (production), load is required — exit if it fails.
+	var privStore *privilege.Store
+	if cfg.Auth.TokenValidatorEnabled {
+		loadCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		privStore, err = privilege.New(loadCtx, sqlDB)
+		if err != nil {
+			slog.Error("failed to load privilege mapping from database", "err", err)
+			os.Exit(1)
+		}
+		slog.Info("privilege store loaded")
+	}
 
 	fileSvc := file.NewService(file.StorageConfig{
 		AccountName:   cfg.Azure.StorageAccountName,
@@ -79,11 +79,11 @@ func main() {
 		Users: usermysql.NewRepository(sqlDB),
 	}
 
-    mux := http.NewServeMux()
+	mux := http.NewServeMux()
 
-    mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-        w.WriteHeader(http.StatusOK)
-    })
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	userhandler.RegisterRoutes(mux, userDeps)
 	riskhandler.RegisterRoutes(mux, buildRiskDeps(sqlDB, fileSvc))
@@ -104,39 +104,39 @@ func main() {
 		),
 	)
 
-    ln, err := net.Listen("tcp", cfg.Port)
-    if err != nil {
-        slog.Error("failed to bind", "addr", cfg.Port, "err", err)
-        os.Exit(1)
-    }
-    slog.Info("server started", "addr", cfg.Port)
+	ln, err := net.Listen("tcp", cfg.Port)
+	if err != nil {
+		slog.Error("failed to bind", "addr", cfg.Port, "err", err)
+		os.Exit(1)
+	}
+	slog.Info("server started", "addr", cfg.Port)
 
-    srv := &http.Server{
-        Handler:           handler,
-        ReadHeaderTimeout: 10 * time.Second,
-        ReadTimeout:       30 * time.Second,
-        WriteTimeout:      30 * time.Second,
-        IdleTimeout:       60 * time.Second,
-    }
+	srv := &http.Server{
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
-    ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-    defer stop()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-    go func() {
-        if err := srv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
-            slog.Error("server exited unexpectedly", "err", err)
-            os.Exit(1)
-        }
-    }()
+	go func() {
+		if err := srv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server exited unexpectedly", "err", err)
+			os.Exit(1)
+		}
+	}()
 
-    <-ctx.Done()
-    stop()
+	<-ctx.Done()
+	stop()
 
-    shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-    defer cancel()
-    if err := srv.Shutdown(shutdownCtx); err != nil {
-        slog.Error("graceful shutdown failed", "err", err)
-        os.Exit(1)
-    }
-    slog.Info("server stopped")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("graceful shutdown failed", "err", err)
+		os.Exit(1)
+	}
+	slog.Info("server stopped")
 }

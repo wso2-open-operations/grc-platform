@@ -69,13 +69,13 @@ func (s *auditService) GetByID(ctx context.Context, id int) (*model.Audit, error
 
 func (s *auditService) Create(ctx context.Context, req model.CreateAuditRequest, createdBy string) (*model.Audit, error) {
 	if req.Name == "" {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "name is required"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "name is required"}
 	}
 	if req.FrameworkID <= 0 || req.ProductID <= 0 {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "frameworkId and productId are required"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "frameworkId and productId are required"}
 	}
 	if req.PeriodStart == "" || req.PeriodEnd == "" {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "periodStart and periodEnd are required"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "periodStart and periodEnd are required"}
 	}
 
 	// Verify framework and product exist.
@@ -84,14 +84,14 @@ func (s *auditService) Create(ctx context.Context, req model.CreateAuditRequest,
 		return nil, err
 	}
 	if fw == nil {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "framework not found"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "framework not found"}
 	}
 	pr, err := s.productRepo.GetByID(ctx, req.ProductID)
 	if err != nil {
 		return nil, err
 	}
 	if pr == nil {
-		return nil, &apierror.Error{StatusCode: http.StatusBadRequest, Body: "product not found"}
+		return nil, &apierror.Error{StatusCode: http.StatusUnprocessableEntity, Body: "product not found"}
 	}
 
 	return s.repo.Create(ctx, req, createdBy)

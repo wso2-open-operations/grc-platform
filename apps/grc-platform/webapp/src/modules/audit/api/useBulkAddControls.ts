@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthApiClient } from "@hooks/useAuthApiClient";
 import { BACKEND_BASE_URL } from "@config/apiConfig";
 import { controlsQueryKey } from "@modules/audit/api/useGetControls";
+import { auditQueryKey } from "@modules/audit/api/useGetAudit";
 import type { AddControlRequest, ControlListResponse } from "@modules/audit/types/audit";
 
 interface BulkAddPayload {
@@ -49,6 +50,7 @@ export function useBulkAddControls() {
 
     onSuccess: (_data, { auditId }) => {
       void queryClient.invalidateQueries({ queryKey: controlsQueryKey(auditId) });
+      void queryClient.invalidateQueries({ queryKey: auditQueryKey(auditId) });
     },
   });
 }

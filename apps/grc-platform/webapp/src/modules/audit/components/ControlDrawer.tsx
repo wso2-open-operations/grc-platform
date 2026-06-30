@@ -589,10 +589,14 @@ export default function ControlDrawer({ control, open, onClose }: ControlDrawerP
       ? localStatus.status
       : control?.status;
 
-  // Optimistically update the local status for instant UI feedback, then persist via API
+  // Optimistically update the local status for instant UI feedback, then persist via API.
+  // On failure, revert the optimistic value so the UI reflects the real server state.
   function handleStatusChange(c: AuditControl, newStatus: ControlStatus) {
     setLocalStatus({ id: c.id, status: newStatus });
-    updateStatus.mutate({ auditId: c.auditId, controlId: c.id, status: newStatus });
+    updateStatus.mutate(
+      { auditId: c.auditId, controlId: c.id, status: newStatus },
+      { onError: () => setLocalStatus(null) },
+    );
   }
 
   function handleAddComment() {
