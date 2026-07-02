@@ -16,6 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import type { FieldPath } from "react-hook-form";
 import { useAsgardeo } from "@asgardeo/react";
 import {
   Alert,
@@ -164,7 +165,7 @@ export default function AddRisk(): JSX.Element {
   const watchedSourceRegister  = methods.watch("sourceRegister");
 
   useEffect(() => {
-    document.getElementById("main-scroll-container")?.scrollTo({ top: 0, behavior: "smooth" });
+    document.getElementById("main-scroll-container")?.scrollTo({ top: 0 });
   }, [activeStep]);
 
   // Fetch all static dropdown data once the user is ready (real auth or mock mode).
@@ -272,7 +273,7 @@ export default function AddRisk(): JSX.Element {
     }
     data.actionSteps.forEach((step, i) => {
       if (!step.description?.trim()) {
-        setError(`actionSteps.${i}.description` as any, { type: "required", message: "Step description is required" });
+        setError(`actionSteps.${i}.description` as FieldPath<AddRiskFormValues>, { type: "required", message: "Step description is required" });
         hasStep3Error = true;
       }
     });
