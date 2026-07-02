@@ -190,10 +190,11 @@ export function formatBackendTimestampForDisplay(
  */
 export function parseDateOnly(s: string | null | undefined): Date | null {
   if (!s) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
   const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return null;
   const date = new Date(y, m - 1, d);
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (date.getFullYear() !== y || date.getMonth() + 1 !== m || date.getDate() !== d) return null;
+  return date;
 }
 
 /**
